@@ -153,7 +153,6 @@ class DecisionTree:
         if len(class_counts) == 1:
             classification = list(class_counts.keys())[0]
             return LeafNode(examples, classification, missing_value_weight)
-
         # If we ran out of attributes, create a leaf with classification based on parent's majority
         if len(attributes) == 0:
             return LeafNode(examples, parent_node.majority_class, missing_value_weight)
@@ -188,10 +187,10 @@ class DecisionTree:
                     value_pure_freq = len(examples_subsets[value]) / len(node.examples)
                     value_freq = (len(examples_subsets[value]) + (missing_values_examples_count * value_pure_freq)) / len(node.examples)
                     information_gain -= subset_entropy * value_freq
-            
     
             # A better split attribute is found, store the attribute and the examples split based on its values
-            if information_gain > max_information_gain:
+            information_gain = 0 if information_gain < 0 else information_gain
+            if information_gain >= max_information_gain:
                 max_information_gain = information_gain
                 split_attr = attr
                 split_attr_examples_subsets = examples_subsets
@@ -200,6 +199,7 @@ class DecisionTree:
         node.split_attr = split_attr
         remaining_attributes = node.attributes.copy()
         remaining_attributes.remove(split_attr)
+
         for value in split_attr.values:
             if value != "NA":
                 missing_value_weight = len(split_attr_examples_subsets[value]) / len(node.examples)
