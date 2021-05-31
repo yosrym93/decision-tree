@@ -1,7 +1,6 @@
 from collections import defaultdict, Counter
 from math import log2
 from abc import ABC, abstractmethod
-import operator
 
 
 class Attribute:
@@ -42,6 +41,10 @@ class Node(ABC):
     def classify(self, example):
         pass
 
+    @abstractmethod
+    def classify_missing_values(self, example, path_weight, probability_weights):
+        pass
+
 
 class InternalNode(Node):
     def __init__(self, examples, attributes, missing_value_weight):
@@ -53,8 +56,8 @@ class InternalNode(Node):
 
     def classify(self, example):
         example_split_attribute_value = example.get_attr_value(self.split_attr)
-        
-        probability_weights = defaultdict(lambda: 0)
+
+        probability_weights = defaultdict(lambda: 0.0)
         if example_split_attribute_value == "NA":
             self.classify_missing_values(example, 1, probability_weights)
             # Normalization
@@ -81,7 +84,6 @@ class InternalNode(Node):
         else:
             next_child = self.children[example.get_attr_value(self.split_attr)]
             next_child.classify_missing_values(example, path_weight, probability_weights)
-            
 
     def __str__(self):
         return "InternalNode(Split Attribute: {}, Majority Class: {}, Children: {}\n)"\
@@ -135,7 +137,7 @@ class DecisionTree:
         for example in examples:
             if example.classification != "NA":
                 class_counts[example.classification] += 1
-        
+
         class_counts = Counter(class_counts)
         return class_counts.most_common(1)[0][0]
 
@@ -178,16 +180,17 @@ class DecisionTree:
                     examples_subsets[attr_value].append(example)
                 else:
                     missing_values_examples_count += 1
-          
+
             # Calculate information gain
             information_gain = node_entropy
             for value in attr.values:
                 if value != "NA":
                     subset_entropy = self.__calc_entropy(examples_subsets[value])
                     value_pure_freq = len(examples_subsets[value]) / len(node.examples)
-                    value_freq = (len(examples_subsets[value]) + (missing_values_examples_count * value_pure_freq)) / len(node.examples)
+                    value_freq = (len(examples_subsets[value]) +
+                                  (missing_values_examples_count * value_pure_freq)) / len(node.examples)
                     information_gain -= subset_entropy * value_freq
-    
+
             # A better split attribute is found, store the attribute and the examples split based on its values
             information_gain = 0 if information_gain < 0 else information_gain
             if information_gain >= max_information_gain:
@@ -203,7 +206,9 @@ class DecisionTree:
         for value in split_attr.values:
             if value != "NA":
                 missing_value_weight = len(split_attr_examples_subsets[value]) / len(node.examples)
-                child_node = self.__create_child_node(node, split_attr_examples_subsets[value], remaining_attributes, missing_value_weight)
+                child_node = self.__create_child_node(
+                    node, split_attr_examples_subsets[value], remaining_attributes, missing_value_weight
+                )
                 node.children[value] = child_node
                 if isinstance(child_node, InternalNode):
                     self.__train(child_node)
