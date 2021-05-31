@@ -3,11 +3,11 @@ import random
 import pandas as pd
 
 titanic = pd.read_csv('titanic.csv')
-categorical_attributes = ["P_class", "Embarked", "Gender", "Survived"]
+categorical_attributes = ["Pclass", "Embarked", "Gender", "Survived"]
 titanic = titanic[categorical_attributes]
 
 attributes = []
-for attribute in ["P_class", "Embarked", "Gender"]:
+for attribute in ["Pclass", "Embarked", "Gender"]:
     attributes.append(Attribute(*([i for i in map(str, titanic[attribute].unique()) if i != 'nan']), name=attribute))
 
 dataset = []
@@ -33,4 +33,4 @@ for test in test_set:
         true_classified += 1
 
 accuracy = true_classified / len(test_set)
-print(accuracy)
+print('Accuracy: {}%'.format(accuracy * 100))
