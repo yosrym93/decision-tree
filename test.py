@@ -1,3 +1,5 @@
+import sys
+
 from decision_tree import DecisionTree, Example, Attribute
 import random
 import pandas as pd
@@ -11,6 +13,7 @@ for attribute in ["Pclass", "Embarked", "Gender"]:
     attributes.append(Attribute(*([i for i in map(str, titanic[attribute].unique()) if i != 'nan']), name=attribute))
 
 dataset = []
+missing_percentage = 5 if len(sys.argv) < 2 else int(sys.argv[1])
 for _, row in titanic.iterrows():
     if str(row["Survived"]) != 'nan' and str(row[attributes[0].name]) != 'nan' and \
             str(row[attributes[1].name]) != 'nan' and str(row[attributes[2].name]) != 'nan':
